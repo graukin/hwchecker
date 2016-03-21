@@ -1,6 +1,7 @@
 import subprocess
 import tempfile
 import logging
+import re
 import utils
 
 
@@ -15,11 +16,15 @@ class MessageHandler:
         self.out = proc.communicate()[0]
         return proc.wait()
 
+    @staticmethod
+    def is_archive_file(fname):
+        return re.match(r'.*(\.tar\.gz|\.tgz|\.tar|\.tar.bz2)$', fname, flags=re.IGNORECASE)
+
     def handle(self, msg):
         archive = None
         for att in msg.attachments():
             logging.info('---- attach: %s (%s) %d bytes', att.filename, att.content_type, len(att.content))
-            if att.content_type == 'application/x-gzip':
+            if att.filename and MessageHandler.is_archive_file(att.filename):
                 archive = att
                 break
 

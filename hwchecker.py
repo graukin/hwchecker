@@ -32,9 +32,8 @@ def main():
         args.password = getpass.getpass(prompt='Enter password for %s' % args.mailbox)
 
     while True:
-        mb = mbhandler.MailboxHandler(args.server)
+        mb = mbhandler.MailboxHandler(args.server, args.user, args.password)
         logging.debug('Logging to %s (server=%s)', args.user, args.server)
-        mb.login(args.user, args.password)
         logging.info('Login success (%s)', args.user)
 
         msg = mb.get_message(args.folder)
@@ -47,14 +46,18 @@ def main():
         rc = mhandler.handle(msg)
 
         logging.info('handling finished with code %d', rc)
+        msender = sending.EmailSender(args.smtp)
+        msender.login('ts2016dups@mail.ru', args.password)
+
         if rc == 0:
-            msender = sending.EmailSender(args.smtp)
-            msender.login('ts2016dups@mail.ru', args.password)
             msender.send(fromaddr='ts2016dups@mail.ru', toaddr=msg.sender, ccaddr='ts2016dups@mail.ru',
                          subject="RESULT: " + msg.subject, body=mhandler.out)
 
             mb.move_message(msg, args.ok_folder)
         else:
+            msender.send(fromaddr='ts2016dups@mail.ru', toaddr=msg.sender, ccaddr='ts2016dups@mail.ru',
+                         subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
+
             mb.move_message(msg, args.err_folder)
 
 

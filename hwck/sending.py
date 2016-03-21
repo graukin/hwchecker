@@ -1,6 +1,9 @@
 import smtplib
+from email.header import Header
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+import utils
 
 
 class EmailSender:
@@ -16,10 +19,10 @@ class EmailSender:
     def send(self, fromaddr, toaddr, ccaddr, subject, body):
         msg = MIMEMultipart()
         msg['From'] = fromaddr
-        msg['To'] = toaddr
+        msg['To'] = utils.extract_addr(toaddr)
         msg['Cc'] = ccaddr
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
+        msg['Subject'] = "%s" % Header(subject, 'utf-8')
+        msg.attach(MIMEText(body, 'plain', 'utf-8'))
 
         text = msg.as_string()
         self.server.sendmail(fromaddr, [toaddr, ccaddr], text)
