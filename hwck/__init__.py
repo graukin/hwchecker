@@ -1,6 +1,6 @@
 import logging
 
-__all__ = ['mbhandler', 'mhandle', 'sending']
+__all__ = ['config', 'mbhandler', 'mhandle', 'sending']
 
 
 def init_logger(verbosity):
