@@ -7,7 +7,7 @@ import utils
 
 
 class EmailSender:
-    def __init__(self, server, port=587):
+    def __init__(self, server, port=465):
         self.server = smtplib.SMTP(server, port)
 
     def login(self, username, password):
