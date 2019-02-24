@@ -20,47 +20,50 @@ def handle_new_messages(cfg):
     mb = mbhandler.MailboxHandler(cfg.imap_server, cfg.username, cfg.password)
     logging.info('Login success')
 
-    msg = mb.get_message(cfg.src_folder)
-    if not msg:
-        logging.info('No more messages to proceed')
-        return True
-
-    logging.info('new message: %s', msg)
-    mhandler = mhandle.MessageHandler(cfg)
-    rc = mhandler.handle(msg)
-
-    logging.info('handling finished with code %d', rc)
-    msender = sending.EmailSender(cfg.smtp_server)
-    msender.login(cfg.from_addr, cfg.password)
-
-    if rc == 0:
-        msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
-                     subject="RESULT: " + msg.subject, body=mhandler.out)
-
-        mb.move_message(msg, cfg.ok_folder)
-    else:
-        msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
-                     subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
-
-        mb.move_message(msg, cfg.err_folder)
-
-
-def repeat_with_retries(cfg):
-    nfails = 0
-
+    current_hw_id = 0
+    empty_dir = 0
     while True:
+        cfg.create_folders(current_hw_id)
+        current_hw_id += 1
+        msg = mb.get_message(cfg.src_folder)
+        if not msg:
+            empty_dir += 1
+            logging.info('No more messages to proceed')
+            if empty_dir >= len(cfg.homeworks):
+                time.sleep(cfg.check_interval)
+                logging.info('Extra sleep')
+            time.sleep(cfg.check_interval)
+            continue
+
+        empty_dir = 0
+
+        logging.info('new message: %s', msg)
+        mhandler = mhandle.MessageHandler(cfg)
+        rc = mhandler.handle(msg)
+
+        logging.info('handling finished with code %d', rc)
+        msender = sending.EmailSender(cfg.smtp_server)
+        msender.login(cfg.from_addr, cfg.password)
+
+        if rc == 0:
+            msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
+                         subject="RESULT: " + msg.subject, body=mhandler.out)
+
+            mb.move_message(msg, cfg.ok_folder)
+        else:
+            msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
+                         subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
+
+            mb.move_message(msg, cfg.err_folder)
+
+        time.sleep(cfg.check_interval)
+
+
+def check_mail(cfg):
         try:
             handle_new_messages(cfg)
         except RuntimeError as e:
             logging.error("Error occured: %s", e)
-            nfails += 1
-            if nfails >= cfg.max_fails:
-                logging.fatal("Exit since too much fails in row (%d)", nfails)
-                return
-        else:
-            nfails = 0
-
-        time.sleep(cfg.check_interval)
 
 
 def main():
@@ -73,7 +76,7 @@ def main():
     if not cfg.password:
         cfg.password = getpass.getpass(prompt='Enter password for %s' % cfg.username)
 
-    repeat_with_retries(cfg)
+    check_mail(cfg)
 
 
 if __name__ == '__main__':
