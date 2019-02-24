@@ -65,6 +65,8 @@ class MailboxHandler:
         self.mail = mail
         self.password = password
 
+        self.login()
+
     def login(self):
         if self.conn:
             self.conn.logout()
@@ -80,7 +82,6 @@ class MailboxHandler:
         self.login()
 
     def get_message(self, folder):
-        self._relogin()
         rv, data = self.conn.select(folder)
         if rv != 'OK':
             raise FolderNotFoundError("Can't select folder %s" % folder)
@@ -95,6 +96,7 @@ class MailboxHandler:
                 raise MailboxError("Can't retrieve message %s" % num)
 
             return MailboxMessage(folder, num, raw_msg[0][1])
+        return None
 
     def move_message(self, msg, dst_folder):
         self._relogin()
