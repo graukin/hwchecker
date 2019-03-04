@@ -2,7 +2,6 @@
 
 import getpass
 import argparse
-import logging
 import hwck
 import time
 from hwck import *
@@ -16,32 +15,32 @@ def parse_command_line():
 
 
 def handle_new_messages(cfg):
-    logging.debug('Logging to server %s (user=%s)', cfg.imap_server, cfg.username)
+    cfg.add_to_log('Logging to server {} (user={})'.format(cfg.imap_server, cfg.username))
     mb = mbhandler.MailboxHandler(cfg.imap_server, cfg.username, cfg.password)
-    logging.info('Login success')
+    cfg.add_to_log('Login success')
 
     current_hw_id = 0
     empty_dir = 0
     while True:
         cfg.create_folders(current_hw_id)
         current_hw_id += 1
-        msg = mb.get_message(cfg.src_folder)
+        msg = mb.get_message(cfg.src_folder, cfg.get_allowed_mails(), cfg.bad_folder)
         if not msg:
             empty_dir += 1
-            logging.info('No more messages to proceed')
+            cfg.add_to_log('No more messages to proceed')
             if empty_dir >= len(cfg.homeworks):
                 time.sleep(cfg.check_interval)
-                logging.info('Extra sleep')
+                cfg.add_to_log('Extra sleep')
             time.sleep(cfg.check_interval)
             continue
 
         empty_dir = 0
 
-        logging.info('new message: %s', msg)
+        cfg.add_to_log('new message: {}'.format(msg))
         mhandler = mhandle.MessageHandler(cfg)
         rc = mhandler.handle(msg)
 
-        logging.info('handling finished with code %d', rc)
+        cfg.add_to_log('handling finished with code {}'.format(rc))
         msender = sending.EmailSender(cfg.smtp_server)
         msender.login(cfg.from_addr, cfg.password)
 
@@ -50,11 +49,13 @@ def handle_new_messages(cfg):
                          subject="RESULT: " + msg.subject, body=mhandler.out)
 
             mb.move_message(msg, cfg.ok_folder)
+            cfg.add_to_log("{} --- ok".format(msg.sender))
         else:
             msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
                          subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
 
             mb.move_message(msg, cfg.err_folder)
+            cfg.add_to_log("{} --- fail".format(msg.sender))
 
         time.sleep(cfg.check_interval)
 
@@ -63,14 +64,13 @@ def check_mail(cfg):
         try:
             handle_new_messages(cfg)
         except RuntimeError as e:
-            logging.error("Error occured: %s", e)
+            cfg.add_to_log("Error occured: {}".format(e))
 
 
 def main():
     args = parse_command_line()
     hwck.init_logger(args.verbose)
 
-    logging.info('Loading config from %s', args.config)
     cfg = config.HwckConfig(args.config)
 
     if not cfg.password:

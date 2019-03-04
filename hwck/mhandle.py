@@ -1,6 +1,5 @@
 import subprocess
 import tempfile
-import logging
 import re
 import utils
 
@@ -23,13 +22,12 @@ class MessageHandler:
     def handle(self, msg):
         archive = None
         for att in msg.attachments():
-            logging.info('---- attach: %s (%s) %d bytes', att.filename, att.content_type, len(att.content))
             if att.filename and MessageHandler.is_archive_file(att.filename):
                 archive = att
                 break
 
         if archive is None:
-            logging.info('skip message (no appropriate attachment found)')
+            self.cfg.add_to_log('skip message (no appropriate attachment found)')
             return -1
 
         tf = tempfile.NamedTemporaryFile(suffix='_%s' % archive.filename, delete=True)

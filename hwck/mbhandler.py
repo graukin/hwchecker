@@ -81,7 +81,7 @@ class MailboxHandler:
     def _relogin(self):
         self.login()
 
-    def get_message(self, folder):
+    def get_message(self, folder, allowed_list, bad_folder):
         rv, data = self.conn.select(folder)
         if rv != 'OK':
             raise FolderNotFoundError("Can't select folder %s" % folder)
@@ -90,12 +90,17 @@ class MailboxHandler:
         if rv != 'OK':
             raise MailboxError("Can't retrieve new messages")
 
-        for num in data[0].split():
-            rv, raw_msg = self.conn.fetch(num, '(RFC822)')
-            if rv != 'OK':
-                raise MailboxError("Can't retrieve message %s" % num)
+        for mail_data in data:
+            for num in mail_data[0].split():
+                rv, raw_msg = self.conn.fetch(num, '(RFC822)')
+                if rv != 'OK':
+                    raise MailboxError("Can't retrieve message %s" % num)
 
-            return MailboxMessage(folder, num, raw_msg[0][1])
+                msg = MailboxMessage(folder, num, raw_msg[0][1])
+                if msg.sender in allowed_list:
+                    return msg
+                else:
+                    self.move_message(msg, bad_folder)
         return None
 
     def move_message(self, msg, dst_folder):
