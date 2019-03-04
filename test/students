@@ -1,1 +1,1 @@
-[{"name":"student1","email":"e1@mail.ru"},{"name":"student2","email":"e2@mail.ru"},{"name":"student3","email":"e3@mail.ru"},{"name":"student4","email":"e4@mail.ru"},{"name":"student5","email":"e5@mail.ru"}]
+[{"name":"student1","email":"e1@mail.ru","attempts":0},{"name":"student2","email":"e2@mail.ru","attempts":0},{"name":"student3","email":"e3@mail.ru","attempts":0},{"name":"student4","email":"e4@mail.ru","attempts":9},{"name":"student5","email":"e5@mail.ru","attempts":0}]
