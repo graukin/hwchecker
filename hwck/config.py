@@ -25,6 +25,7 @@ class HwckConfig:
         self._read_password()
 
         self.homeworks = json.loads(self.config.get('checker', 'homeworks'))
+        self.mail_tail = self.config.get('checker', 'mail_tail')
         self._read_students()
 
         self.src_folder = None
@@ -61,7 +62,7 @@ class HwckConfig:
     def check_mail(self, mail):
         self.add_to_log("Check mail: " + mail)
         if mail in self.students.keys():
-            if self.students[mail]["attempts"] < 10:
+            if self.students[mail]["attempts"] < self.max_attempts:
                 self.students[mail]["attempts"] += 1
                 return True
             else:
