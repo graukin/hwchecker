@@ -16,13 +16,13 @@ class MessageHandler:
         return proc.wait()
 
     @staticmethod
-    def is_archive_file(fname):
-        return re.match(r'.*(\.tar\.gz|\.tgz|\.tar|\.tar.bz2)$', fname, flags=re.IGNORECASE)
+    def check_format(fname):
+        return re.match(r'.*(\.tar\.gz|\.tgz|\.tar|\.tar.bz2|\.py)$', fname, flags=re.IGNORECASE)
 
     def handle(self, msg):
         archive = None
         for att in msg.attachments():
-            if att.filename and MessageHandler.is_archive_file(att.filename):
+            if att.filename and MessageHandler.check_format(att.filename):
                 archive = att
                 break
 
