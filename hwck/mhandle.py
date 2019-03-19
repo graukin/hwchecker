@@ -10,7 +10,7 @@ class MessageHandler:
         self.out = None
 
     def _exec(self, packfile):
-        proc = subprocess.Popen([self.cfg.checker_exec, packfile],
+        proc = subprocess.Popen([self.cfg.checker, packfile],
                                 stdin=utils.get_dev_null(), stdout=subprocess.PIPE)
         self.out = proc.communicate()[0]
         return proc.wait()

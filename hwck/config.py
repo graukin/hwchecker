@@ -25,7 +25,6 @@ class HwckConfig:
         self._read_password()
 
         self.homeworks = json.loads(self.config.get('checker', 'homeworks'))
-        self.mail_tail = self.config.get('checker', 'mail_tail')
         self._read_students()
 
         self.src_folder = None
@@ -78,7 +77,8 @@ class HwckConfig:
     def create_folders(self, hw_id):
         self.add_to_log("Create folders for " + hw_id)
         list_id = hw_id % len(self.homeworks)
-        self.src_folder = "{}_infosearch@mail.ru".format(self.homeworks[list_id])
+        self.checker = silf.homeworks[list_id]["checker"]
+        self.src_folder = "{}".format(self.homeworks[list_id]["mail"])
         self.ok_folder = "{}/success".format(self.src_folder)
         self.err_folder = "{}/fail".format(self.src_folder)
         self.bad_folder = "{}/bad".format(self.src_folder)
