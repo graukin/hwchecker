@@ -23,7 +23,7 @@ def handle_new_messages(cfg):
     while True:
         for hw_id in cfg.homeworks.keys():
             cfg.create_folders(hw_id)
-            msg = mb.get_message(cfg.src_folder, cfg.get_allowed_mails(), cfg.bad_folder)
+            msg = mb.get_message(cfg.src_folder, cfg.get_allowed_mails(hw_id), cfg.bad_folder)
             if not msg:
                 empty_dir += 1
                 cfg.add_to_log('No more messages to proceed for {}'.format(hw_id))
@@ -36,29 +36,25 @@ def handle_new_messages(cfg):
             empty_dir = 0
 
             cfg.add_to_log('new message from {}: {}'.format(msg.sender, msg.subject))
-            if cfg.check_mail(hw_id, msg.sender):
-                mhandler = mhandle.MessageHandler(cfg)
-                rc = mhandler.handle(msg)
+            mhandler = mhandle.MessageHandler(cfg, hw_id)
+            rc = mhandler.handle(msg)
 
-                cfg.add_to_log('handling finished with code {}'.format(rc))
-                msender = sending.EmailSender(cfg.smtp_server)
-                msender.login(cfg.from_addr, cfg.password)
+            cfg.add_to_log('handling finished with code {}'.format(rc))
+            msender = sending.EmailSender(cfg.smtp_server)
+            msender.login(cfg.addr, cfg.password)
 
-                if rc == 0:
-                    msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
-                                 subject="RESULT: " + msg.subject, body=mhandler.out)
+            if rc == 0:
+                msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
+                             subject="RESULT: " + msg.subject, body=mhandler.out)
 
-                    mb.move_message(msg, cfg.ok_folder)
-                    cfg.add_to_log("{} --- ok".format(msg.sender))
-                else:
-                    msender.send(fromaddr=cfg.from_addr, toaddr=msg.sender, ccaddr=cfg.cc_addr,
-                                 subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
-
-                    mb.move_message(msg, cfg.err_folder)
-                    cfg.add_to_log("{} --- fail".format(msg.sender))
+                mb.move_message(msg, cfg.ok_folder)
+                cfg.add_to_log("{} --- ok".format(msg.sender))
             else:
-                mb.move_message(msg, cfg.bad_folder)
-                cfg.add_to_log("do not check {}".format(msg.sender))
+                msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
+                             subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
+
+                mb.move_message(msg, cfg.err_folder)
+                cfg.add_to_log("{} --- fail".format(msg.sender))
 
             time.sleep(cfg.check_interval)
 
