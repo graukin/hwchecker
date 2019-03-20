@@ -5,12 +5,13 @@ import utils
 
 
 class MessageHandler:
-    def __init__(self, cfg):
+    def __init__(self, cfg, hw_id):
         self.cfg = cfg
+        self.hw_id = hw_id
         self.out = None
 
     def _exec(self, packfile):
-        proc = subprocess.Popen([self.cfg.checker, packfile],
+        proc = subprocess.Popen([self.cfg.homeworks[self.hw_id]["checker"], packfile],
                                 stdin=utils.get_dev_null(), stdout=subprocess.PIPE)
         self.out = proc.communicate()[0]
         return proc.wait()
