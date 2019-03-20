@@ -11,8 +11,9 @@ class MessageHandler:
         self.out = None
 
     def _exec(self, packfile):
-        proc = subprocess.Popen([self.cfg.homeworks[self.hw_id]["checker"], packfile],
-                                stdin=utils.get_dev_null(), stdout=subprocess.PIPE)
+        checker = self.cfg.homeworks[self.hw_id]["checker"]
+        self.cfg.add_to_log("try to run {}".format(checker))
+        proc = subprocess.Popen([checker, packfile], stdin=utils.get_dev_null(), stdout=subprocess.PIPE)
         self.out = proc.communicate()[0]
         return proc.wait()
 
