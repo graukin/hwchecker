@@ -84,7 +84,7 @@ class HwckConfig:
     def create_folders(self, hw_id):
         self.add_to_log("Create folders for " + hw_id)
         self.checker = self.homeworks[hw_id]["checker"]
-        self.src_folder = "{}".format(self.homeworks[hw_id]["mail"])
+        self.src_folder = "{}".format(self.homeworks[hw_id]["email"])
         self.ok_folder = "{}/success".format(self.src_folder)
         self.err_folder = "{}/fail".format(self.src_folder)
         self.bad_folder = "{}/bad".format(self.src_folder)
