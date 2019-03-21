@@ -5,6 +5,7 @@ import email
 import email.header
 from email.parser import HeaderParser
 import datetime
+import re
 from collections import namedtuple
 
 MailAttachment = namedtuple('MailAttachment', ['filename', 'content_type', 'content'])
@@ -81,10 +82,10 @@ class MailboxHandler:
     def _relogin(self):
         self.login()
 
-    def get_message(self, folder, allowed_list, bad_folder):
-        rv, data = self.conn.select(folder)
+    def get_message(self, cfg, hw_id):
+        rv, data = self.conn.select(cfg.src_folder)
         if rv != 'OK':
-            raise FolderNotFoundError("Can't select folder %s" % folder)
+            raise FolderNotFoundError("Can't select folder %s" % cfg.src_folder)
 
         rv, data = self.conn.search(None, 'ALL')
         if rv != 'OK':
@@ -96,11 +97,17 @@ class MailboxHandler:
                 if rv != 'OK':
                     raise MailboxError("Can't retrieve message %s" % num)
 
-                msg = MailboxMessage(folder, num, raw_msg[0][1])
-                if msg.sender in allowed_list:
-                    return msg
+                msg = MailboxMessage(cfg.src_folder, num, raw_msg[0][1])
+                res = re.compile("<(.+)>").findall(msg.sender.encode('utf-8').strip())
+                sender = res[len(res) - 1]
+                attempt_id = cfg.check_mail(hw_id, sender)
+
+                cfg.add_to_log("attempt: {}".format(attempt_id))
+                if attempt_id == -1:
+                    #self.move_message(msg, cfg.bad_folder)
+                    print("move to bad_folder")
                 else:
-                    self.move_message(msg, bad_folder)
+                    return msg
         return None
 
     def move_message(self, msg, dst_folder):

@@ -2,6 +2,7 @@
 
 import getpass
 import argparse
+import tempfile
 import hwck
 import time
 from hwck import *
@@ -23,7 +24,7 @@ def handle_new_messages(cfg):
     while True:
         for hw_id in cfg.homeworks.keys():
             cfg.create_folders(hw_id)
-            msg = mb.get_message(cfg.src_folder, cfg.get_allowed_mails(hw_id), cfg.bad_folder)
+            msg = mb.get_message(cfg, hw_id)
             if not msg:
                 empty_dir += 1
                 cfg.add_to_log('No more messages to proceed for {}'.format(hw_id))
@@ -35,26 +36,30 @@ def handle_new_messages(cfg):
 
             empty_dir = 0
 
-            cfg.add_to_log('new message from {}: {}'.format(msg.sender, msg.subject))
+            cfg.add_to_log('new message from {}: {}'.format(msg.sender.encode("utf-8"), msg.subject.encode("utf-8")))
             mhandler = mhandle.MessageHandler(cfg, hw_id)
             rc = mhandler.handle(msg)
 
             cfg.add_to_log('handling finished with code {}'.format(rc))
-            msender = sending.EmailSender(cfg.smtp_server)
-            msender.login(cfg.addr, cfg.password)
+            #msender = sending.EmailSender(cfg.smtp_server)
+            #msender.login(cfg.addr, cfg.password)
 
+            tf = tempfile.NamedTemporaryFile(suffix='_%s' % hw_id, delete=False, dir="/tmp/hw_logs/")
             if rc == 0:
-                msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
-                             subject="RESULT: " + msg.subject, body=mhandler.out)
-
-                mb.move_message(msg, cfg.ok_folder)
-                cfg.add_to_log("{} --- ok".format(msg.sender))
+                #msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
+                #             subject="RESULT: " + msg.subject, body=mhandler.out)
+                tf.write(mhandler.out)
+                #mb.move_message(msg, cfg.ok_folder)
+                cfg.add_to_log("{} --- ok".format(msg.sender.encode("utf-8")))
             else:
-                msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
-                             subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
-
-                mb.move_message(msg, cfg.err_folder)
-                cfg.add_to_log("{} --- fail".format(msg.sender))
+                #msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
+                #             subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
+                tf.write('cant find attachment or exec container')
+                #mb.move_message(msg, cfg.err_folder)
+                cfg.add_to_log("{} --- fail".format(msg.sender.encode("utf-8")))
+            tf.flush()
+            cfg.add_to_log("log: {}".format(tf.name))
+            tf.close()
 
             time.sleep(cfg.check_interval)
 

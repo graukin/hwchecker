@@ -68,11 +68,12 @@ class HwckConfig:
         self.add_to_log("Check mail: {} for HW:{}".format(mail, hw_id))
         if mail in self.homeworks[hw_id]["students"].keys():
             if self.homeworks[hw_id]["students"][mail]["attempts"] < self.homeworks[hw_id]["max_attempts"]:
-                self.homeworks[hw_id]["students"][mail]["attempts"] += 1
-                return True
+                new_attempt = self.homeworks[hw_id]["students"][mail]["attempts"] + 1
+                self.homeworks[hw_id]["students"][mail]["attempts"] = new_attempt
+                return new_attempt
             else:
                 self.add_to_log("Too many attempts for {}".format(mail))
-        return False
+        return -1
 
     def get_allowed_mails(self, hw_id):
         return self.homeworks[hw_id]["students"].keys()
