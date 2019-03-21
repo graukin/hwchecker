@@ -92,6 +92,8 @@ class MailboxHandler:
             raise MailboxError("Can't retrieve new messages")
 
         for mail_data in data:
+            if not mail_data:
+                return None
             for num in mail_data[0].split():
                 rv, raw_msg = self.conn.fetch(num, '(RFC822)')
                 if rv != 'OK':
