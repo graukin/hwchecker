@@ -49,13 +49,13 @@ def handle_new_messages(cfg):
                 #msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
                 #             subject="RESULT: " + msg.subject, body=mhandler.out)
                 tf.write(mhandler.out)
-                #mb.move_message(msg, cfg.ok_folder)
+                mb.move_message(msg, cfg.ok_folder)
                 cfg.add_to_log("{} --- ok".format(msg.sender.encode("utf-8")))
             else:
                 #msender.send(fromaddr=cfg.addr, toaddr=msg.sender, ccaddr=cfg.addr,
                 #             subject="ERROR: " + msg.subject, body='cant find attachment or exec container')
                 tf.write('cant find attachment or exec container')
-                #mb.move_message(msg, cfg.err_folder)
+                mb.move_message(msg, cfg.err_folder)
                 cfg.add_to_log("{} --- fail".format(msg.sender.encode("utf-8")))
             tf.flush()
             cfg.add_to_log("log: {}".format(tf.name))
