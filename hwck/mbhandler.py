@@ -106,8 +106,8 @@ class MailboxHandler:
 
                 cfg.add_to_log("attempt: {}".format(attempt_id))
                 if attempt_id == -1:
-                    #self.move_message(msg, cfg.bad_folder)
-                    print("move to bad_folder")
+                    self.move_message(msg, cfg.bad_folder)
+                    #print("move to bad_folder")
                 else:
                     return msg
         return None
