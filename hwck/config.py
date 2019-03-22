@@ -1,6 +1,8 @@
 import ConfigParser
 import json
 import logging
+import os
+import re
 
 logging.basicConfig(
     format='%(levelname)s %(asctime)s : %(message)s',
@@ -35,6 +37,7 @@ class HwckConfig:
         self.add_to_log("Config loaded")
 
     def _load_homeworks(self):
+        basic_attempt_path = self.config.get('checker', 'attempts_folder')
         self.homeworks = {}
         hw_list = json.loads(self.config.get('checker', 'homeworks'))
         for hw in hw_list:
@@ -43,6 +46,16 @@ class HwckConfig:
             self.homeworks[hw["id"]]["checker"] = hw["checker"]
             self.homeworks[hw["id"]]["max_attempts"] = hw["max_attempts"]
             self.homeworks[hw["id"]]["students"] = self._read_students(hw["stud_list"])
+            self._load_attempts(hw["id"], basic_attempt_path)
+
+    def _load_attempts(self, hw_id, basic_path):
+        attempts_file = os.path.join(basic_path, "attempt_{}.txt".format(hw_id))
+        if os.path.exists(attempts_file):
+            with open(attempts_file, 'r') as f:
+                for line in f:
+                    res = re.compile("<(.+)>").findall(line)
+                    sender = res[len(res) - 1]
+                    self.check_mail(hw_id, sender)
 
     def _read_password(self):
         try:
